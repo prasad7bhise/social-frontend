@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SocialLogo } from "../components/SocialLogo";
+import { login } from "../../lib/api/auth";
 
 const SESSION_KEY = "social_session";
 
@@ -12,18 +13,27 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     if (!email.trim() || !password) {
       setError("Please fill in all fields");
       return;
     }
-    if (typeof window !== "undefined") {
-      localStorage.setItem(SESSION_KEY, "1");
+    setLoading(true);
+    try {
+      await login({ email, password });
+      if (typeof window !== "undefined") {
+        localStorage.setItem(SESSION_KEY, "1");
+      }
+      router.push("/feed");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Log in failed");
+    } finally {
+      setLoading(false);
     }
-    router.push("/feed");
   }
 
   return (
@@ -64,9 +74,10 @@ export default function LoginPage() {
           />
           <button
             type="submit"
-            className="mt-2 flex h-12 w-full items-center justify-center rounded-xl bg-white font-semibold text-zinc-900 transition hover:bg-zinc-200"
+            disabled={loading}
+            className="mt-2 flex h-12 w-full items-center justify-center rounded-xl bg-white font-semibold text-zinc-900 transition hover:bg-zinc-200 disabled:opacity-50"
           >
-            Log in
+            {loading ? "Logging in..." : "Log in"}
           </button>
         </form>
         <p className="mt-6 text-center text-sm text-zinc-400">

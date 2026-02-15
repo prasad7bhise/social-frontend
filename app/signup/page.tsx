@@ -4,18 +4,21 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SocialLogo } from "../components/SocialLogo";
+import { signup } from "../../lib/api/auth";
 
 const SESSION_KEY = "social_session";
 
 export default function SignUpPage() {
   const router = useRouter();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     if (password !== confirmPassword) {
@@ -26,14 +29,22 @@ export default function SignUpPage() {
       setError("Password must be at least 6 characters");
       return;
     }
-    if (!email.trim() || !username.trim()) {
+    if (!email.trim() || !firstName.trim() || !lastName.trim()) {
       setError("Please fill in all fields");
       return;
     }
-    if (typeof window !== "undefined") {
-      localStorage.setItem(SESSION_KEY, "1");
+    setLoading(true);
+    try {
+      await signup({ firstName, lastName, email, password });
+      if (typeof window !== "undefined") {
+        localStorage.setItem(SESSION_KEY, "1");
+      }
+      router.push("/feed");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Sign up failed");
+    } finally {
+      setLoading(false);
     }
-    router.push("/feed");
   }
 
   return (
@@ -59,17 +70,24 @@ export default function SignUpPage() {
             </p>
           )}
           <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            placeholder="First name"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
             className="rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
           />
           <input
             type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Last name"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            className="rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+          />
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
           />
           <input
@@ -88,9 +106,10 @@ export default function SignUpPage() {
           />
           <button
             type="submit"
-            className="mt-2 flex h-12 w-full items-center justify-center rounded-xl bg-white font-semibold text-zinc-900 transition hover:bg-zinc-200"
+            disabled={loading}
+            className="mt-2 flex h-12 w-full items-center justify-center rounded-xl bg-white font-semibold text-zinc-900 transition hover:bg-zinc-200 disabled:opacity-50"
           >
-            Sign up
+            {loading ? "Signing up..." : "Sign up"}
           </button>
         </form>
         <p className="mt-6 text-center text-sm text-zinc-400">
