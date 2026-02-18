@@ -2,38 +2,39 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { signIn, useSession } from "next-auth/react";
 import { SocialLogo } from "../components/SocialLogo";
-import { login } from "../../lib/api/auth";
-
-const SESSION_KEY = "social_session";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const { status } = useSession();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-    if (!email.trim() || !password) {
-      setError("Please fill in all fields");
-      return;
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.replace("/feed");
     }
+  }, [status, router]);
+
+  async function handleLogin() {
+    setError("");
     setLoading(true);
     try {
-      await login({ email, password });
-      if (typeof window !== "undefined") {
-        localStorage.setItem(SESSION_KEY, "1");
-      }
-      router.push("/feed");
+      await signIn("keycloak", { callbackUrl: "/feed" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Log in failed");
-    } finally {
       setLoading(false);
     }
+  }
+
+  if (status === "loading") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-950">
+        <p className="text-zinc-400">Checking session...</p>
+      </div>
+    );
   }
 
   return (
@@ -52,40 +53,24 @@ export default function LoginPage() {
         <h1 className="mb-6 text-center text-xl font-semibold text-white">
           Log in to Social
         </h1>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4">
           {error && (
             <p className="rounded-lg bg-red-500/20 px-3 py-2 text-sm text-red-300">
               {error}
             </p>
           )}
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
-          />
           <button
-            type="submit"
+            type="button"
+            onClick={handleLogin}
             disabled={loading}
             className="mt-2 flex h-12 w-full items-center justify-center rounded-xl bg-white font-semibold text-zinc-900 transition hover:bg-zinc-200 disabled:opacity-50"
           >
-            {loading ? "Logging in..." : "Log in"}
+            {loading ? "Redirecting..." : "Continue with Keycloak"}
           </button>
-        </form>
-        <p className="mt-6 text-center text-sm text-zinc-400">
-          Don&apos;t have an account?{" "}
-          <Link href="/signup" className="font-medium text-white hover:underline">
-            Sign up
-          </Link>
-        </p>
+          <p className="mt-4 text-center text-xs text-zinc-400">
+            You will be redirected to your organization&apos;s Keycloak login page.
+          </p>
+        </div>
       </main>
     </div>
   );

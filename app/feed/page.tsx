@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { signOut, useSession, getSession } from "next-auth/react";
 import { SocialLogo } from "../components/SocialLogo";
-
-const SESSION_KEY = "social_session";
 
 const iconClass = "h-6 w-6 shrink-0";
 
@@ -98,32 +97,59 @@ const MOCK_POSTS = [
 
 export default function FeedPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [mounted, setMounted] = useState(false);
-  const [hasSession, setHasSession] = useState(false);
   const [selectedId, setSelectedId] = useState<(typeof NAV_CONFIG)[number]["id"]>("feed");
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (!mounted) return;
-    const session = typeof window !== "undefined" ? localStorage.getItem(SESSION_KEY) : null;
-    if (!session) {
-      router.replace("/");
-      return;
-    }
-    setHasSession(true);
-  }, [mounted, router]);
+  async function handleLogout() {
+    // 1️⃣ Clear NextAuth session
+  const session = await getSession() as any;
+  await signOut({ redirect: false });
 
-  function handleLogout() {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem(SESSION_KEY);
-    }
-    router.replace("/");
+  // 2️⃣ Logout from Keycloak
+  const logoutUrl =
+  "http://localhost:8081/realms/social-realm/protocol/openid-connect/logout" +
+  `?id_token_hint=${session?.idToken}` +
+  `&post_logout_redirect_uri=http://localhost:3000`;
+
+window.location.href = logoutUrl;
   }
 
-  if (!mounted || !hasSession) {
+  useEffect(() => {
+    if (!mounted) return;
+    if (status === "unauthenticated") {
+      router.replace("/login");
+    }
+  }, [mounted, status, router]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    if (status !== "authenticated") return;
+    if (!session?.accessToken) return;
+
+    const API_BASE_URL =
+      process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
+
+    const fetchPosts = async () => {
+      try {
+        await fetch(`${API_BASE_URL}/api/test`, {
+          headers: {
+            Authorization: `Bearer ${session.accessToken}`,
+          },
+        });
+      } catch {
+        // Backend may not be ready yet; ignore errors for now.
+      }
+    };
+
+    void fetchPosts();
+  }, [mounted, status, session]);
+
+  if (!mounted || status === "loading") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-100 dark:bg-zinc-900">
         <p className="text-zinc-500">Loading...</p>
