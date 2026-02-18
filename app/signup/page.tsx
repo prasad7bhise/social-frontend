@@ -1,52 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { SocialLogo } from "../components/SocialLogo";
-import { signup } from "../../lib/api/auth";
-
-const SESSION_KEY = "social_session";
 
 export default function SignUpPage() {
-  const router = useRouter();
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters");
-      return;
-    }
-    if (!email.trim() || !firstName.trim() || !lastName.trim()) {
-      setError("Please fill in all fields");
-      return;
-    }
-    setLoading(true);
-    try {
-      await signup({ firstName, lastName, email, password });
-      if (typeof window !== "undefined") {
-        localStorage.setItem(SESSION_KEY, "1");
-      }
-      router.push("/feed");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Sign up failed");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-zinc-950">
       <div className="absolute inset-0">
@@ -60,64 +17,24 @@ export default function SignUpPage() {
         <div className="mb-6 flex justify-center">
           <SocialLogo className="text-white" />
         </div>
-        <h1 className="mb-6 text-center text-xl font-semibold text-white">
-          Create an account
+        <h1 className="mb-4 text-center text-xl font-semibold text-white">
+          Accounts managed with Keycloak
         </h1>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {error && (
-            <p className="rounded-lg bg-red-500/20 px-3 py-2 text-sm text-red-300">
-              {error}
-            </p>
-          )}
-          <input
-            type="text"
-            placeholder="First name"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            className="rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
-          />
-          <input
-            type="text"
-            placeholder="Last name"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            className="rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
-          />
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
-          />
-          <input
-            type="password"
-            placeholder="Confirm password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
-          />
-          <button
-            type="submit"
-            disabled={loading}
-            className="mt-2 flex h-12 w-full items-center justify-center rounded-xl bg-white font-semibold text-zinc-900 transition hover:bg-zinc-200 disabled:opacity-50"
-          >
-            {loading ? "Signing up..." : "Sign up"}
-          </button>
-        </form>
-        <p className="mt-6 text-center text-sm text-zinc-400">
-          Already have an account?{" "}
-          <Link href="/login" className="font-medium text-white hover:underline">
-            Log in
-          </Link>
+        <p className="mb-4 text-center text-sm text-zinc-300">
+          New accounts are created and managed through your organization&apos;s Keycloak
+          identity provider.
         </p>
+        <p className="mb-6 text-center text-sm text-zinc-400">
+          To get started, go to the login page and sign in with Keycloak.
+        </p>
+        <div className="flex justify-center">
+          <Link
+            href="/login"
+            className="inline-flex h-10 items-center justify-center rounded-xl bg-white px-4 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-200"
+          >
+            Go to login
+          </Link>
+        </div>
       </main>
     </div>
   );
