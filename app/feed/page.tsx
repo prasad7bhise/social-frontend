@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { signOut, useSession, getSession } from "next-auth/react";
 import { SocialLogo } from "../components/SocialLogo";
+import { fetchCurrentUser } from "@/lib/api/userApi";
 
 const iconClass = "h-6 w-6 shrink-0";
 
@@ -131,22 +132,11 @@ window.location.href = logoutUrl;
     if (status !== "authenticated") return;
     if (!session?.accessToken) return;
 
-    const API_BASE_URL =
-      process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
-
-    const fetchPosts = async () => {
-      try {
-        await fetch(`${API_BASE_URL}/api/test`, {
-          headers: {
-            Authorization: `Bearer ${session.accessToken}`,
-          },
-        });
-      } catch {
-        // Backend may not be ready yet; ignore errors for now.
-      }
-    };
-
-    void fetchPosts();
+    fetchCurrentUser()
+    .then(user => {
+      console.log(user);
+    })
+    .catch(console.error);
   }, [mounted, status, session]);
 
   if (!mounted || status === "loading") {
