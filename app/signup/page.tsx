@@ -11,6 +11,11 @@ export default function SignUpPage() {
         <div className="absolute -right-1/4 bottom-0 h-[50%] w-[50%] rounded-full bg-fuchsia-600/35 blur-[100px]" />
         <div className="absolute left-1/2 top-1/2 h-[40%] w-[40%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-rose-500/25 blur-[80px]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_50%,transparent_0%,#0a0a0a_100%)]" />
+        <div className="absolute top-16 right-8 h-24 w-24 rounded-full border border-white/5 animate-pulse" />
+        <div className="absolute bottom-12 left-12 h-16 w-16 rounded-full border border-violet-400/10 animate-pulse" style={{ animationDelay: "0.8s" }} />
+        <div className="absolute top-1/4 left-10 h-3 w-3 rounded-full bg-white/15 animate-ping" />
+        <div className="absolute bottom-1/3 right-20 h-2 w-2 rounded-full bg-fuchsia-400/20 animate-ping" style={{ animationDelay: "0.3s" }} />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px]" />
       </div>
 
       <main className="relative z-10 w-full max-w-sm rounded-2xl border border-white/10 bg-white/5 px-8 py-10 shadow-2xl backdrop-blur-xl sm:max-w-md">
