@@ -9,6 +9,9 @@ import { SocialLogo } from "../components/SocialLogo";
 export default function LoginPage() {
   const router = useRouter();
   const { status } = useSession();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -18,13 +21,36 @@ export default function LoginPage() {
     }
   }, [status, router]);
 
-  async function handleLogin() {
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const result = await signIn("credentials", {
+        username: email,
+        password,
+        remember: remember ? "true" : "false",
+        redirect: false,
+      });
+      if (result?.error) {
+        setError("Invalid email or password");
+      } else {
+        router.push("/feed");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleKeycloakLogin() {
     setError("");
     setLoading(true);
     try {
       await signIn("keycloak", { callbackUrl: "/feed" });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Log in failed");
+      setError(err instanceof Error ? err.message : "Login failed");
       setLoading(false);
     }
   }
@@ -44,6 +70,11 @@ export default function LoginPage() {
         <div className="absolute -right-1/4 bottom-0 h-[50%] w-[50%] rounded-full bg-fuchsia-600/35 blur-[100px]" />
         <div className="absolute left-1/2 top-1/2 h-[40%] w-[40%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-rose-500/25 blur-[80px]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_50%,transparent_0%,#0a0a0a_100%)]" />
+        <div className="absolute top-10 left-10 h-20 w-20 rounded-full border border-white/10 animate-pulse" />
+        <div className="absolute bottom-20 right-16 h-32 w-32 rounded-full border border-white/5 animate-pulse" style={{ animationDelay: "1s" }} />
+        <div className="absolute top-1/3 right-10 h-4 w-4 rounded-full bg-white/10 animate-ping" />
+        <div className="absolute bottom-1/3 left-12 h-3 w-3 rounded-full bg-violet-400/20 animate-ping" style={{ animationDelay: "0.5s" }} />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px]" />
       </div>
 
       <main className="relative z-10 w-full max-w-sm rounded-2xl border border-white/10 bg-white/5 px-8 py-10 shadow-2xl backdrop-blur-xl sm:max-w-md">
@@ -53,24 +84,84 @@ export default function LoginPage() {
         <h1 className="mb-6 text-center text-xl font-semibold text-white">
           Log in to Social
         </h1>
-        <div className="flex flex-col gap-4">
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {error && (
             <p className="rounded-lg bg-red-500/20 px-3 py-2 text-sm text-red-300">
               {error}
             </p>
           )}
+
+          <div>
+            <label htmlFor="email" className="block text-xs font-medium text-zinc-400 mb-1">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              required
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/20"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="password" className="block text-xs font-medium text-zinc-400 mb-1">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/20"
+            />
+          </div>
+
+          <label className="flex items-center gap-2 text-sm text-zinc-400">
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={(e) => setRemember(e.target.checked)}
+              className="rounded border-white/20 bg-white/5 accent-violet-500"
+            />
+            Remember me
+          </label>
+
           <button
-            type="button"
-            onClick={handleLogin}
-            disabled={loading}
+            type="submit"
+            disabled={loading || !email || !password}
             className="mt-2 flex h-12 w-full items-center justify-center rounded-xl bg-white font-semibold text-zinc-900 transition hover:bg-zinc-200 disabled:opacity-50"
           >
-            {loading ? "Redirecting..." : "Continue with Keycloak"}
+            {loading ? "Signing in..." : "Log in"}
           </button>
-          <p className="mt-4 text-center text-xs text-zinc-400">
-            You will be redirected to your organization&apos;s Keycloak login page.
-          </p>
+        </form>
+
+        <div className="mt-4 flex items-center gap-3">
+          <div className="h-px flex-1 bg-white/10" />
+          <span className="text-xs text-zinc-500">or</span>
+          <div className="h-px flex-1 bg-white/10" />
         </div>
+
+        <button
+          type="button"
+          onClick={handleKeycloakLogin}
+          disabled={loading}
+          className="mt-1 flex h-11 w-full items-center justify-center rounded-xl border border-white/20 text-sm font-medium text-white transition hover:bg-white/10 disabled:opacity-50"
+        >
+          Continue with Keycloak SSO
+        </button>
+
+        <p className="mt-4 text-center text-xs text-zinc-500">
+          No account?{" "}
+          <Link href="/signup" className="text-violet-400 hover:text-violet-300">
+            Sign up
+          </Link>
+        </p>
       </main>
     </div>
   );
