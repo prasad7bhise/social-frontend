@@ -20,10 +20,13 @@ export default function InactivityWrapper({
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(() => {
         signOut({ redirect: false });
+        const keycloakIssuer =
+          process.env.NEXT_PUBLIC_KEYCLOAK_ISSUER ||
+          "http://localhost:8081/realms/social-realm";
+        const logoutUrl = `${keycloakIssuer}/protocol/openid-connect/logout`;
         window.location.href =
-          "http://localhost:8081/realms/social-realm/protocol/openid-connect/logout" +
-          `?id_token_hint=${(session as any)?.idToken ?? ""}` +
-          "&post_logout_redirect_uri=http://localhost:3000";
+          `${logoutUrl}?id_token_hint=${(session as any)?.idToken ?? ""}` +
+          `&post_logout_redirect_uri=${window.location.origin}`;
       }, TIMEOUT_MS);
     }
 
