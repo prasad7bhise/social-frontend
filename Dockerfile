@@ -15,4 +15,4 @@ COPY --from=base --chown=nextjs:nodejs /app/.next/static ./.next/static
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000
-CMD ["node", "server.js"]
+CMD ["sh", "-c", "unset HOSTNAME && exec node server.js"]
