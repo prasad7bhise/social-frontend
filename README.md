@@ -1,36 +1,93 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Social Frontend
+
+Next.js 16 social media frontend with NextAuth.js and Keycloak authentication.
+
+## Tech Stack
+
+- **Next.js 16** (App Router, Turbopack)
+- **React 19** with Server Components
+- **NextAuth.js v4** (Keycloak + Credentials providers)
+- **Tailwind CSS 4**
+- **TypeScript**
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 22+
+- npm
+
+### Local Development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Copy `.env.example` to `.env.local` and fill in the values:
 
-## Learn More
+```env
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=supersecret
+KEYCLOAK_CLIENT_ID=social-frontend
+KEYCLOAK_ISSUER=http://localhost:8081/realms/social-realm
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
+NEXT_PUBLIC_KEYCLOAK_ISSUER=http://localhost:8081/realms/social-realm
+```
 
-To learn more about Next.js, take a look at the following resources:
+### Run Tests
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run test       # vitest (unit tests)
+npm run test:watch # watch mode
+npm run lint       # ESLint
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deployment
 
-## Deploy on Vercel
+See [DEPLOYMENT.md](../docs/DEPLOYMENT.md) for the full deployment guide covering Docker, CI/CD, and Render configuration.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Project Structure
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+app/
+├── api/auth/[...nextauth]/   # NextAuth route handler
+├── components/               # Shared React components
+├── feed/                     # Feed page
+├── login/                    # Login page
+├── messages/                 # Messages page
+├── notifications/            # Notifications page
+├── profile/                  # Profile page
+├── explore/                  # Explore page
+├── signup/                   # Registration page
+├── user/[id]/               # User profile page
+├── layout.tsx                # Root layout
+└── page.tsx                  # Landing page
+
+lib/
+├── auth/nextAuthOptions.ts  # NextAuth config (Keycloak + Credentials)
+├── types/                   # TypeScript types & enums
+└── api.ts                   # API client
+
+test/
+└── setup.ts                 # Vitest setup
+```
+
+## Key Features
+
+- **Keycloak SSO** login via OpenID Connect
+- **Credentials login** with direct password grant
+- **Session management** with 30-day max age, inactivity timeout
+- **Emoji picker** for messages
+- **Real-time polling** for messages & notifications (2s interval)
+- **Responsive design** with dark theme
+
+## CI/CD
+
+- **GitHub Actions** — test → build Docker → push to GHCR → deploy to Render
+- **Docker** multi-stage with `output: "standalone"` (see `Dockerfile`)
+- See [deploy.yml](.github/workflows/deploy.yml) for workflow configuration
