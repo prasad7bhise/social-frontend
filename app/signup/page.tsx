@@ -1,9 +1,53 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { SocialLogo } from "../components/SocialLogo";
+import { registerUser } from "@/lib/api/authApi";
 
 export default function SignUpPage() {
+  const router = useRouter();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const allFilled = firstName && lastName && email && password && confirmPassword;
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+
+    if (!allFilled) {
+      setError("All fields are required");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await registerUser({ firstName, lastName, email, password });
+      router.push("/login?registered=true");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Registration failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-zinc-950">
       <div className="absolute inset-0">
@@ -22,25 +66,127 @@ export default function SignUpPage() {
         <div className="mb-6 flex justify-center">
           <SocialLogo className="text-white" />
         </div>
-        <h1 className="mb-4 text-center text-xl font-semibold text-white">
-          Accounts managed with Keycloak
-        </h1>
-        <p className="mb-4 text-center text-sm text-zinc-300">
-          New accounts are created and managed through your organization&apos;s Keycloak
-          identity provider.
-        </p>
-        <p className="mb-6 text-center text-sm text-zinc-400">
-          To get started, go to the login page and sign in with Keycloak.
-        </p>
-        <div className="flex justify-center">
-          <Link
-            href="/login"
-            className="inline-flex h-10 items-center justify-center rounded-xl bg-white px-4 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-200"
+        <h1 className="mb-6 text-center text-xl font-semibold text-white">Create your account</h1>
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {error && (
+            <p className="rounded-lg bg-red-500/20 px-3 py-2 text-sm text-red-300">{error}</p>
+          )}
+
+          <div className="flex gap-3">
+            <div className="flex flex-1 flex-col gap-1.5">
+              <label htmlFor="firstName" className="text-xs font-medium text-zinc-400">First name</label>
+              <input
+                id="firstName"
+                type="text"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                className="h-10 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none transition focus:border-violet-500/50 focus:bg-white/10"
+                placeholder="John"
+              />
+            </div>
+            <div className="flex flex-1 flex-col gap-1.5">
+              <label htmlFor="lastName" className="text-xs font-medium text-zinc-400">Last name</label>
+              <input
+                id="lastName"
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                className="h-10 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none transition focus:border-violet-500/50 focus:bg-white/10"
+                placeholder="Doe"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="email" className="text-xs font-medium text-zinc-400">Email</label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="h-10 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none transition focus:border-violet-500/50 focus:bg-white/10"
+              placeholder="john@example.com"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="password" className="text-xs font-medium text-zinc-400">Password</label>
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="h-10 w-full rounded-xl border border-white/10 bg-white/5 px-3 pr-10 text-sm text-white outline-none transition focus:border-violet-500/50 focus:bg-white/10"
+                placeholder="At least 6 characters"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition"
+                tabIndex={-1}
+              >
+                {showPassword ? EyeOffIcon() : EyeIcon()}
+              </button>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="confirmPassword" className="text-xs font-medium text-zinc-400">Confirm password</label>
+            <div className="relative">
+              <input
+                id="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="h-10 w-full rounded-xl border border-white/10 bg-white/5 px-3 pr-10 text-sm text-white outline-none transition focus:border-violet-500/50 focus:bg-white/10"
+                placeholder="Repeat your password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition"
+                tabIndex={-1}
+              >
+                {showConfirmPassword ? EyeOffIcon() : EyeIcon()}
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading || !allFilled}
+            className="mt-2 flex h-11 w-full items-center justify-center rounded-xl bg-white font-semibold text-zinc-900 transition hover:bg-zinc-200 disabled:opacity-50"
           >
-            Go to login
-          </Link>
-        </div>
+            {loading ? "Creating account..." : "Sign up"}
+          </button>
+        </form>
+
+        <p className="mt-4 text-center text-xs text-zinc-500">
+          Already have an account?{" "}
+          <Link href="/login" className="text-violet-400 hover:text-violet-300">Log in</Link>
+        </p>
       </main>
     </div>
+  );
+}
+
+function EyeIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+      <circle cx="12" cy="12" r="3"/>
+    </svg>
+  );
+}
+
+function EyeOffIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+      <line x1="1" y1="1" x2="23" y2="23"/>
+    </svg>
   );
 }
